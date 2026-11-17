@@ -1,0 +1,11 @@
+---
+portal_project_name: student-portal
+portal_image: student-portal:1.0
+portal_port: 8080
+portal_dir: /opt/student-portal
+portal_src_dir: "{{ playbook_dir }}/.."
+portal_redis_image: redis:7.4-alpine
+portal_health_path: /health
+
+docker_users:
+  - "{{ ansible_user }}"

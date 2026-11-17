@@ -1,0 +1,49 @@
+---
+- name: Create the portal directory
+  ansible.builtin.file:
+    path: "{{ portal_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Copy Dockerfile, compose.yml and .dockerignore
+  ansible.builtin.copy:
+    src: "{{ portal_src_dir }}/{{ item }}"
+    dest: "{{ portal_dir }}/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - Dockerfile
+    - compose.yml
+    - .dockerignore
+  register: portal_build_files
+
+- name: Copy the application source
+  ansible.builtin.copy:
+    src: "{{ portal_src_dir }}/app/"
+    dest: "{{ portal_dir }}/app/"
+    owner: root
+    group: root
+    mode: "0644"
+    directory_mode: "0755"
+  register: portal_app_files
+
+- name: Render the Compose environment file from variables
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ portal_dir }}/.env"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Start the portal and Redis with Docker Compose
+  community.docker.docker_compose_v2:
+    project_src: "{{ portal_dir }}"
+    project_name: "{{ portal_project_name }}"
+    build: "{{ 'always' if (portal_build_files is changed or portal_app_files is changed) else 'policy' }}"
+    remove_orphans: true
+    state: present
+    wait: true
+    wait_timeout: 120

@@ -1,0 +1,25 @@
+---
+- name: Deploy University Student Portal
+  hosts: app_servers
+  become: true
+
+  roles:
+    - role: docker
+    - role: portal
+
+  post_tasks:
+    - name: Check the portal health endpoint
+      ansible.builtin.uri:
+        url: "http://{{ ansible_host | default(inventory_hostname) }}:{{ portal_port }}{{ portal_health_path }}"
+        return_content: true
+        status_code: 200
+      register: portal_health
+      until: portal_health.json is defined and portal_health.json.status == 'healthy'
+      retries: 10
+      delay: 3
+      delegate_to: localhost
+      become: false
+
+    - name: Show the health check result
+      ansible.builtin.debug:
+        msg: "{{ portal_health.url }} -> HTTP {{ portal_health.status }} {{ portal_health.json | to_json }}"

@@ -1,0 +1,8 @@
+.git
+.gitignore
+.env
+*.log
+ansible/
+README.md
+**/__pycache__
+**/*.py[cod]
